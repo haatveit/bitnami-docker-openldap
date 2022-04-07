@@ -46,6 +46,7 @@ export LDAP_DAEMON_GROUP="slapd"
 # Settings
 export LDAP_PORT_NUMBER="${LDAP_PORT_NUMBER:-1389}"
 export LDAP_LDAPS_PORT_NUMBER="${LDAP_LDAPS_PORT_NUMBER:-1636}"
+export LDAP_ALLOW_PRIVILEGED_PORTS="${LDAP_ALLOW_PRIVILEGED_PORTS:-no}"
 export LDAP_ROOT="${LDAP_ROOT:-dc=example,dc=org}"
 export LDAP_ADMIN_USERNAME="${LDAP_ADMIN_USERNAME:-admin}"
 export LDAP_ADMIN_DN="${LDAP_ADMIN_USERNAME/#/cn=},${LDAP_ROOT}"
@@ -91,7 +92,9 @@ ldap_validate() {
     check_allowed_port() {
         local port_var="${1:?missing port variable}"
         local validate_port_args=()
-        ! am_i_root && validate_port_args+=("-unprivileged")
+        if ! am_i_root && ! is_boolean_yes "$LDAP_ALLOW_PRIVILEGED_PORTS"; then
+            validate_port_args+=("-unprivileged")
+        fi
         if ! err=$(validate_port "${validate_port_args[@]}" "${!port_var}"); then
             print_validation_error "An invalid port was specified in the environment variable ${port_var}: ${err}."
         fi
