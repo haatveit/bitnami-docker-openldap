@@ -175,6 +175,7 @@ $ docker-compose up -d
 The Bitnami Docker OpenLDAP can be easily setup with the following environment variables:
 
 - `LDAP_PORT_NUMBER`: The port OpenLDAP is listening for requests. Default: **1389** (non privileged port)
+- `LDAP_ALLOW_PRIVILEGED_PORTS`: Allow OpenLDAP to bind to privileged (<1024) ports. Setting this variable to `yes` only disables checks. Default: **no** (only non privileged ports are allowed)
 - `LDAP_ROOT`: LDAP baseDN (or suffix) of the LDAP tree. Default: **dc=example,dc=org**
 - `LDAP_ADMIN_USERNAME`: LDAP database admin user. Default: **admin**
 - `LDAP_ADMIN_PASSWORD`: LDAP database admin password. Default: **adminpassword**
@@ -251,6 +252,36 @@ The [Bitnami OpenLDAP](https://github.com/bitnami/bitnami-docker-openldap) image
 The allowed script extension is `.sh`, all scripts are executed in alphabetical order and need to reside in `/docker-entrypoint-initdb.d/`.
 
 Scripts are executed are after the initilization and before the startup of the OpenLDAP service.
+
+### Bind to privileged ports in the container
+
+Setting the environment variable `LDAP_ALLOW_PRIVILEGED_PORTS=true` will disable checks that normally prevent OpenLDAP in the container from binding to privileged ports, like the standard LDAP port 389 and LDAPS port 636.
+
+This is not enough to allow OpenLDAP to bind to privileged ports, and you should additionally grant your container the capability `NET_BIND_SERVICE` for it to work.
+
+1. Using `docker run`:
+
+  ```console
+  $ docker run --cap-add=NET_BIND_SERVICE --env LDAP_PORT_NUMBER=389 --env LDAP_ALLOW_PRIVILEGED_PORTS=yes docker.io/bitnami/openldap:latest
+  ```
+
+2. Modifying the `docker-compose.yml` file present in this repository:
+
+    ```yaml
+    services:
+      openldap:
+      ...
+        cap_add:
+          - NET_BIND_SERVICE
+        environment:
+          ...
+          - LDAP_PORT_NUMBER=389
+          - LDAP_ALLOW_PRIVILEGED_PORTS=yes
+        ...
+      ...
+    ```
+
+Example docker-compose.yml file:
 
 ## Logging
 
